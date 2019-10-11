@@ -15,41 +15,41 @@ namespace TheMonolith
     {
         public static void Main(string[] args)
         {
-            var config = new ConfigurationBuilder()
-                .AddCommandLine(args)
-                .Build();
-
-            var serviceProvider = CreateServices();
+            // var serviceProvider = CreateServices();
 
             // Put the database update into a scope to ensure
             // that all resources will be disposed.
-            using (var scope = serviceProvider.CreateScope())
-            {
-                UpdateDatabase(scope.ServiceProvider);
-            }
-
+            // using (var scope = serviceProvider.CreateScope())
+            // {
+            //     UpdateDatabase(scope.ServiceProvider);
+            // }
 
             CreateHostBuilder(args).Build().Run();
         }
 
 
-        private static IServiceProvider CreateServices()
-        {
-            return new ServiceCollection()
-                // Add common FluentMigrator services
-                .AddFluentMigratorCore()
-                .ConfigureRunner(rb => rb
-                    // Add SQLite support to FluentMigrator
-                    .AddSQLite()
-                    // Set the connection string
-                    .WithGlobalConnectionString("Data Source=lb.db")
-                    // Define the assembly containing the migrations
-                    .ScanIn(typeof(Program).Assembly).For.Migrations())
-                // Enable logging to console in the FluentMigrator way
-                .AddLogging(lb => lb.AddFluentMigratorConsole())
-                // Build the service provider
-                .BuildServiceProvider(false);
-        }
+        // private static IServiceProvider CreateServices()
+        // {
+        //     return new ServiceCollection()
+        //         // Add common FluentMigrator services
+        //         .AddFluentMigratorCore()
+        //         .ConfigureRunner(rb =>
+        //         {
+        //             var ret = rb
+        //                                 // Add SQLite support to FluentMigrator
+        //                                 .AddSQLite()
+        //                                 // Set the connection string
+        //                                 .WithGlobalConnectionString("Data Source=lb.db")
+        //                                 // Define the assembly containing the migrations
+        //                                 .ScanIn(typeof(Migrations.AddCustomersTable).Assembly).For.Migrations();
+        //             System.Console.WriteLine("ret ... {0}", ret);
+
+        //         })
+        //         // Enable logging to console in the FluentMigrator way
+        //         .AddLogging(lb => lb.AddFluentMigratorConsole())
+        //         // Build the service provider
+        //         .BuildServiceProvider(false);
+        // }
 
         private static void UpdateDatabase(IServiceProvider serviceProvider)
         {
@@ -60,11 +60,17 @@ namespace TheMonolith
             runner.MigrateUp();
         }
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
+        public static IHostBuilder CreateHostBuilder(string[] args)
+        {
+            return Host.CreateDefaultBuilder(args)
+                .ConfigureHostConfiguration(config =>
+                {
+                    config.AddCommandLine(args);
+                })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
                 });
+        }
     }
 }

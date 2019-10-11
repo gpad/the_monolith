@@ -3,22 +3,22 @@ using FluentMigrator;
 namespace TheMonolith.Migrations
 {
     [Migration(201910111804003)]
-    public class AddCustomersTable : Migration
+    public class AddInvoicesTable : Migration
     {
         public override void Down()
         {
-            Delete.Table("customers");
+            Delete.Table("invoices");
         }
 
         public override void Up()
         {
-            Create.Table("customers")
+            Create.Table("invoices")
                 .WithColumn("id").AsGuid().PrimaryKey()
+                .WithColumn("number").AsString().Unique()
                 .WithColumn("first_name").AsString(255)
                 .WithColumn("last_name").AsString(255)
-                .WithColumn("age").AsInt16()
-                .WithColumn("genders").AsString()
-                .WithColumn("email").AsString()
+                .WithColumn("address").AsString()
+                .WithColumn("total").AsCurrency()
                 ;
         }
     }

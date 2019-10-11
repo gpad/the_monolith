@@ -28,7 +28,7 @@ namespace TheMonolith
                 .AddFluentMigratorCore()
                 .ConfigureRunner(builder =>
                     builder.AddSQLite()
-                    .WithGlobalConnectionString("Data Source=lb.db")
+                    .WithGlobalConnectionString("Data Source=TheDatabase.db")
                     .ScanIn(typeof(Migrations.AddCustomersTable).Assembly).For.Migrations()
                 )
                 .AddControllersWithViews();

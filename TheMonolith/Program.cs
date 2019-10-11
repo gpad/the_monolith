@@ -27,30 +27,6 @@ namespace TheMonolith
             CreateHostBuilder(args).Build().Run();
         }
 
-
-        // private static IServiceProvider CreateServices()
-        // {
-        //     return new ServiceCollection()
-        //         // Add common FluentMigrator services
-        //         .AddFluentMigratorCore()
-        //         .ConfigureRunner(rb =>
-        //         {
-        //             var ret = rb
-        //                                 // Add SQLite support to FluentMigrator
-        //                                 .AddSQLite()
-        //                                 // Set the connection string
-        //                                 .WithGlobalConnectionString("Data Source=lb.db")
-        //                                 // Define the assembly containing the migrations
-        //                                 .ScanIn(typeof(Migrations.AddCustomersTable).Assembly).For.Migrations();
-        //             System.Console.WriteLine("ret ... {0}", ret);
-
-        //         })
-        //         // Enable logging to console in the FluentMigrator way
-        //         .AddLogging(lb => lb.AddFluentMigratorConsole())
-        //         // Build the service provider
-        //         .BuildServiceProvider(false);
-        // }
-
         private static void UpdateDatabase(IServiceProvider serviceProvider)
         {
             // Instantiate the runner

@@ -2,7 +2,7 @@ using FluentMigrator;
 
 namespace TheMonolith.Migrations
 {
-    [Migration(201910111804003)]
+    [Migration(201910111804004)]
     public class AddShipmentAddressesTable : Migration
     {
         public override void Down()

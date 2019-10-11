@@ -2,7 +2,7 @@ using FluentMigrator;
 
 namespace TheMonolith.Migrations
 {
-    [Migration(201910111804003)]
+    [Migration(201910111804007)]
     public class AddCustomerLevelsTable : Migration
     {
         public override void Down()
@@ -14,7 +14,7 @@ namespace TheMonolith.Migrations
         {
             Create.Table("customer_levels")
                 .WithColumn("id").AsGuid().PrimaryKey()
-                .WithColumn("name").AsString(255).NotNullable().Indexed().Unique()
+                .WithColumn("name").AsString(255).NotNullable().Unique()
                 .WithColumn("description").AsString();
         }
     }

@@ -14,11 +14,11 @@ namespace TheMonolith.Simulations
         private readonly IWarehouse Warehouse;
         private readonly ICustomerBase CustomerBase;
         private readonly IShop Shop;
-        public ILogger Logger { get; }
+        private readonly ILogger logger;
 
         public Simulations(ILogger logger, IWarehouse warehouse, ICustomerBase customerBase, IShop shop)
         {
-            this.Logger = logger;
+            this.logger = logger;
             Warehouse = warehouse;
             CustomerBase = customerBase;
             Shop = shop;
@@ -28,9 +28,9 @@ namespace TheMonolith.Simulations
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                Logger.LogInformation("*** Start cycle of simulation ***");
+                logger.LogInformation("*** Start cycle of simulation ***");
                 var tasks = Enumerable.Range(1, 10)
-                    .Select(n => FlipCoin() ? (ISimulation)new Seller(Logger, Warehouse) : (ISimulation)new Buyer(CustomerBase, Warehouse, Shop))
+                    .Select(n => FlipCoin() ? (ISimulation)new Seller(logger, Warehouse) : (ISimulation)new Buyer(logger, CustomerBase, Warehouse, Shop))
                     .Select(simulation => simulation.StartAsync(stoppingToken));
                 await Task.WhenAll(tasks);
             }

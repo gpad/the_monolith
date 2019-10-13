@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using TheMonolith.ECommerce;
 
 namespace TheMonolith.Simulations
@@ -12,9 +13,11 @@ namespace TheMonolith.Simulations
         private readonly ICustomerBase CustomerBase;
         private readonly IWarehouse Warehouse;
         private readonly IShop Shop;
+        private readonly ILogger logger;
 
-        public Buyer(ICustomerBase customerBase, IWarehouse warehouse, IShop shop)
+        public Buyer(ILogger logger, ICustomerBase customerBase, IWarehouse warehouse, IShop shop)
         {
+            this.logger = logger;
             CustomerBase = customerBase;
             Warehouse = warehouse;
             Shop = shop;
@@ -22,7 +25,7 @@ namespace TheMonolith.Simulations
 
         public async Task StartAsync(CancellationToken stoppingToken)
         {
-
+            logger.LogInformation("--- Start Buyer ---");
             await Task.Delay(WaitForNextStep(), stoppingToken);
             var customer = await ImpersonateCustomer();
             await ResetCart(customer);

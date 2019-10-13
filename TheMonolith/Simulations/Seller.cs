@@ -11,16 +11,17 @@ namespace TheMonolith.Simulations
     {
         private static Random Random = new Random();
         private readonly IWarehouse Warehouse;
-        private readonly ILogger Logger;
+        private readonly ILogger logger;
 
         public Seller(ILogger logger, IWarehouse warehouse)
         {
-            Logger = logger;
+            this.logger = logger;
             Warehouse = warehouse;
         }
 
         public async Task StartAsync(CancellationToken stoppingToken)
         {
+            logger.LogInformation("+++ Start Seller +++");
             await Task.Delay(WaitForNextStep(), stoppingToken);
             await AddNewProductsAsync(stoppingToken);
             await Task.Delay(WaitForNextStep(), stoppingToken);
@@ -33,7 +34,7 @@ namespace TheMonolith.Simulations
         {
             var products = await Warehouse.GetActiveProductsAsync();
             var tasks = products.Shuffle().Take(products.Count() / 4)
-                .TapList(l => Logger.LogInformation($"Dismiss {l.Count()} products"))
+                .TapList(l => logger.LogInformation($"Dismiss {l.Count()} products"))
                 .Select(p => Warehouse.DismissAsync(p));
             await Task.WhenAll(tasks);
         }
@@ -42,7 +43,7 @@ namespace TheMonolith.Simulations
         {
             var products = await Warehouse.GetActiveProductsAsync();
             var tasks = products.Shuffle().Take(products.Count() / 4)
-                .TapList(l => Logger.LogInformation($"Refill {l.Count()} products"))
+                .TapList(l => logger.LogInformation($"Refill {l.Count()} products"))
                 .Select(p => Warehouse.RefillAsync(p, 1 + Random.Next(100)));
             await Task.WhenAll(tasks);
         }
@@ -50,7 +51,7 @@ namespace TheMonolith.Simulations
         private async Task AddNewProductsAsync(CancellationToken stoppingToken)
         {
             int v = Random.Next(100);
-            Logger.LogInformation($"Add {v} new products");
+            logger.LogInformation($"Add {v} new products");
             for (int i = 0; i < v; i++)
             {
                 if (stoppingToken.IsCancellationRequested)

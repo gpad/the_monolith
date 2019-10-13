@@ -30,6 +30,7 @@ namespace TheMonolith.Simulations
             var customer = await ImpersonateCustomer();
             await ResetCart(customer);
             int count = 1 + Random.Next(10);
+            logger.LogInformation($"Add {count} products in cart");
             for (int i = 0; i < count && !stoppingToken.IsCancellationRequested; i++)
             {
                 var product = await ChoseProduct();
@@ -37,10 +38,18 @@ namespace TheMonolith.Simulations
                 await PutProductInCart(customer, product);
                 await Task.Delay(WaitForNextStep(), stoppingToken);
             }
-            if (FlipCoin() || stoppingToken.IsCancellationRequested) return;
+            if (FlipCoin() || stoppingToken.IsCancellationRequested)
+            {
+                logger.LogInformation($"Abbandon cart");
+                return;
+            }
             await Task.Delay(WaitForNextStep(), stoppingToken);
             var invoice_id = await Checkout(customer);
-            if (FlipCoin() || stoppingToken.IsCancellationRequested) return;
+            if (FlipCoin() || stoppingToken.IsCancellationRequested)
+            {
+                logger.LogInformation($"Abbandon Checkout {invoice_id}");
+                return;
+            }
             await Task.Delay(WaitForNextStep(), stoppingToken);
             await Pay(customer, invoice_id);
         }
@@ -57,11 +66,13 @@ namespace TheMonolith.Simulations
 
         private async Task Pay(Customer customer, Guid invoice_id)
         {
+            logger.LogInformation($"Pay invoice {invoice_id}");
             await Shop.PayAsync(customer, invoice_id);
         }
 
         private async Task<Guid> Checkout(Customer customer)
         {
+            logger.LogInformation($"Checkout cart");
             return await Shop.CheckoutAsync(customer);
         }
 

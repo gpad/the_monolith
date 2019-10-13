@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,35 +23,40 @@ namespace TheMonolith.Simulations
         public async Task StartAsync(CancellationToken stoppingToken)
         {
             logger.LogInformation("+++ Start Seller +++");
-            await Task.Delay(WaitForNextStep(), stoppingToken);
+            await WaitForNextStep(stoppingToken);
             await AddNewProductsAsync(stoppingToken);
-            await Task.Delay(WaitForNextStep(), stoppingToken);
+            await WaitForNextStep(stoppingToken);
             await ReFillSomeProductsAsync(stoppingToken);
-            await Task.Delay(WaitForNextStep(), stoppingToken);
+            await WaitForNextStep(stoppingToken);
             await DismissSomeProductsAsync(stoppingToken);
         }
 
         private async Task DismissSomeProductsAsync(CancellationToken stoppingToken)
         {
             var products = await Warehouse.GetActiveProductsAsync();
-            var tasks = products.Shuffle().Take(products.Count() / 4)
+            var tasks = products.Shuffle().Take(HowMany(products))
                 .TapList(l => logger.LogInformation($"Dismiss {l.Count()} products"))
-                .Select(p => Warehouse.DismissAsync(p));
+                .Select(product => Warehouse.DismissAsync(product));
             await Task.WhenAll(tasks);
         }
 
         private async Task ReFillSomeProductsAsync(CancellationToken stoppingToken)
         {
             var products = await Warehouse.GetActiveProductsAsync();
-            var tasks = products.Shuffle().Take(products.Count() / 4)
+            var tasks = products.Shuffle().Take(HowMany(products))
                 .TapList(l => logger.LogInformation($"Refill {l.Count()} products"))
                 .Select(p => Warehouse.RefillAsync(p, 1 + Random.Next(100)));
             await Task.WhenAll(tasks);
         }
 
+        private static int HowMany<T>(IEnumerable<T> list)
+        {
+            return (list.Count() / 4) % 30;
+        }
+
         private async Task AddNewProductsAsync(CancellationToken stoppingToken)
         {
-            int v = Random.Next(100);
+            int v = Random.Next(10);
             logger.LogInformation($"Add {v} new products");
             for (int i = 0; i < v; i++)
             {
@@ -70,9 +76,10 @@ namespace TheMonolith.Simulations
                 new Money(1 + Random.Next(100), new Currency("EUR")));
         }
 
-        private TimeSpan WaitForNextStep()
+        private async Task WaitForNextStep(CancellationToken stoppingToken)
         {
-            return TimeSpan.FromMilliseconds(Random.Next(1000));
+            TimeSpan timeSpan = TimeSpan.FromMilliseconds(Random.Next(1000));
+            await Task.Delay(timeSpan, stoppingToken);
         }
     }
 }

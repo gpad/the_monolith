@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
@@ -64,9 +65,9 @@ namespace TheMonolith.ECommerce
             }
         }
 
-        public async Task PayAsync(Customer customer, Guid invoice_id)
+        public async Task<Invoice> PayAsync(Customer customer, Guid invoiceId)
         {
-            logger.LogDebug($"Pay invoice {invoice_id} {customer.Id}");
+            logger.LogDebug($"Pay invoice {invoiceId} {customer.Id}");
             await Task.Delay(random.Next(2000)); // Simulate payment
             using (var connection = await GetOpenConnection())
             {
@@ -77,18 +78,47 @@ namespace TheMonolith.ECommerce
                         update invoices
                             SET status = 'paid'
                         where
-                            id = @id and customer_id = @customer_id
+                            id = @id and customer_id = @customerId
                         ", new
                         {
-                            id = invoice_id,
-                            customer_id = customer.Id,
+                            id = invoiceId,
+                            customerId = customer.Id,
                         }, transaction);
 
                     if (affectedRows != 1)
-                        throw new ArgumentException($"Unable to update invoice {invoice_id} for customer {customer.Id}");
+                        throw new ArgumentException($"Unable to update invoice {invoiceId} for customer {customer.Id}");
                     await transaction.CommitAsync();
+                    return await GetInvoiceAsync(invoiceId, customer);
                 }
             }
+        }
+
+        private async Task<Invoice> GetInvoiceAsync(Guid invoiceId, Customer customer)
+        {
+            using (var connection = await GetOpenConnection())
+            {
+                var rowInvoice = await connection.QuerySingleAsync("select * from invoices where id = @id", new { id = invoiceId });
+                var rowItems = await connection.QueryAsync("select * from invoice_items where invoice_id = @id", new { id = invoiceId });
+                return new Invoice(
+                    Guid.Parse(rowInvoice.id),
+                    rowInvoice.number,
+                    customer,
+                    rowInvoice.address,
+                    new Money(rowInvoice.total, Currency.EUR),
+                    CreateInvoiceItems(rowItems),
+                    Guid.Parse(rowInvoice.cart_id)
+                    );
+            }
+        }
+
+        private static IEnumerable<InvoiceItem> CreateInvoiceItems(IEnumerable<dynamic> rowItems)
+        {
+            return rowItems.Select(r => new InvoiceItem(
+                r.id,
+                r.product_id,
+                r.description,
+                new Money(r.price, Currency.EUR),
+                r.qty));
         }
 
         public async Task PutProductInCartAsync(Customer customer, Product product)

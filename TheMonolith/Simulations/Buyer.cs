@@ -67,7 +67,13 @@ namespace TheMonolith.Simulations
         private async Task Pay(Customer customer, Guid invoice_id)
         {
             logger.LogInformation($"Pay invoice {invoice_id}");
-            await Shop.PayAsync(customer, invoice_id);
+            var invoice = await Shop.PayAsync(customer, invoice_id);
+            await SendPaymentInfoAsync(invoice);
+        }
+
+        private Task SendPaymentInfoAsync(Invoice invoice)
+        {
+            throw new NotImplementedException();
         }
 
         private async Task<Guid> Checkout(Customer customer)

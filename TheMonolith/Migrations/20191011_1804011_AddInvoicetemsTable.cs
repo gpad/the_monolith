@@ -15,7 +15,7 @@ namespace TheMonolith.Migrations
             Create.Table("invoice_items")
                 .WithColumn("id").AsGuid().PrimaryKey()
                 .WithColumn("product_id").AsString(255)
-                .WithColumn("descriptioon").AsString(1024)
+                .WithColumn("description").AsString(1024)
                 .WithColumn("price").AsCurrency()
                 .WithColumn("qty").AsInt16()
                 .WithColumn("invoice_id").AsGuid().ForeignKey("invoices", "id").NotNullable().Indexed();

@@ -28,15 +28,18 @@ namespace TheMonolith.Simulations
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                Logger.LogInformation("Start cycle of simulation");
-                var tasks = Enumerable.Range(1, 100).Select(n => FlipCoin() ? (ISimulation)new Seller(Warehouse) : (ISimulation)new Buyer(CustomerBase, Warehouse, Shop)).Select(simulation => simulation.Start());
+                Logger.LogInformation("*** Start cycle of simulation ***");
+                var tasks = Enumerable.Range(1, 1)
+                    .Select(n => FlipCoin() ? (ISimulation)new Seller(Logger, Warehouse) : (ISimulation)new Buyer(CustomerBase, Warehouse, Shop))
+                    .Select(simulation => simulation.StartAsync(stoppingToken));
                 await Task.WhenAll(tasks);
             }
         }
 
         private bool FlipCoin()
         {
-            return (Random.Next() % 2) == 0;
+            return false;
+            // return (Random.Next() % 2) == 0;
         }
     }
 }

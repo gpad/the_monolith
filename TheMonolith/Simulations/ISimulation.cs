@@ -1,9 +1,10 @@
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace TheMonolith.Simulations
 {
     public interface ISimulation
     {
-        Task Start();
+        Task StartAsync(CancellationToken stoppingToken);
     }
 }

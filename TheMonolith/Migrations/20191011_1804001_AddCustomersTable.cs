@@ -14,11 +14,11 @@ namespace TheMonolith.Migrations
         {
             Create.Table("customers")
                 .WithColumn("id").AsGuid().PrimaryKey()
-                .WithColumn("first_name").AsString(255)
-                .WithColumn("last_name").AsString(255)
-                .WithColumn("age").AsInt16()
-                .WithColumn("genders").AsString()
-                .WithColumn("email").AsString()
+                .WithColumn("first_name").AsString(255).NotNullable()
+                .WithColumn("last_name").AsString(255).NotNullable()
+                .WithColumn("age").AsInt16().Nullable()
+                .WithColumn("gender").AsString().Nullable()
+                .WithColumn("email").AsString().NotNullable().Indexed()
                 ;
         }
     }

@@ -15,7 +15,7 @@ namespace TheMonolith.Migrations
             Create.Table("cart_items")
                 .WithColumn("id").AsGuid().PrimaryKey()
                 .WithColumn("product_id").AsString(255)
-                .WithColumn("descriptioon").AsString(1024)
+                .WithColumn("name").AsString(1024)
                 .WithColumn("price").AsCurrency()
                 .WithColumn("qty").AsInt16()
                 .WithColumn("cart_id").AsGuid().ForeignKey("carts", "id").NotNullable().Indexed();

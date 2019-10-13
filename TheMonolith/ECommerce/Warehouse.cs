@@ -1,28 +1,98 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using Dapper;
+using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging;
 
 namespace TheMonolith.ECommerce
 {
     public class Warehouse : IWarehouse
     {
-        public Task DismissAsync(Product p)
+        public ILogger logger;
+        public Warehouse(ILogger logger)
         {
-            throw new System.NotImplementedException();
+            this.logger = logger;
         }
 
-        public Task FillNewProductAsync(Product product, int v)
+        public async Task DismissAsync(Product product)
         {
-            throw new System.NotImplementedException();
+            logger.LogDebug($"Dismiss product {product.Id}");
+            using (var connection = await GetOpenConnection())
+            {
+                await connection.ExecuteAsync(@"
+                update products
+                    SET
+                        sellable = false
+                    where
+                        id = @Id
+                ", new
+                { Id = product.Id });
+            }
         }
 
-        public Task<IEnumerable<Product>> GetActiveProductsAsync()
+        public async Task AddNewProductAsync(Product product, int qty)
         {
-            throw new System.NotImplementedException();
+            logger.LogDebug($"Add new product {product.Id} - {qty}");
+            using (var connection = await GetOpenConnection())
+            {
+                await connection.ExecuteAsync(@"
+                insert
+                    into products
+                        (id, name, description, price, qty, sellable)
+                    values
+                        (@Id, @Name, @Description, @Price, @Qty, true)
+                ", new
+                {
+                    Id = product.Id,
+                    Name = product.Name,
+                    Description = product.Description,
+                    Price = product.Price.Value,
+                    Qty = qty
+                });
+            }
         }
 
-        public Task RefillAsync(Product p, int v)
+        public async Task<IEnumerable<Product>> GetActiveProductsAsync()
         {
-            throw new System.NotImplementedException();
+            using (var connection = await GetOpenConnection())
+            {
+                var results = await connection.QueryAsync(@"Select * from products where sellable = true and qty > 0");
+                logger.LogDebug($"Get Active products {results.Count()}");
+                return results.Select(row =>
+                {
+                    return new Product(Guid.Parse(row.id), row.name, row.description, new Money((decimal)row.price, Currency.EUR));
+                });
+            }
+        }
+
+        public async Task RefillAsync(Product product, int qtyToAdd)
+        {
+            logger.LogDebug($"Refill product {product.Id} - {qtyToAdd}");
+            using (var connection = await GetOpenConnection())
+            {
+                await connection.ExecuteAsync(@"
+                update products
+                    SET
+                        qty = qty + @Qty
+                    where
+                        id = @Id
+                ", new
+                { Id = product.Id, Qty = qtyToAdd });
+            }
+        }
+
+        private static SqliteConnection GetConnection()
+        {
+            return new SqliteConnection("Data Source=TheMonolith.db");
+        }
+
+        private async Task<SqliteConnection> GetOpenConnection()
+        {
+            var connection = GetConnection();
+            await connection.OpenAsync();
+            return connection;
         }
     }
 }

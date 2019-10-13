@@ -1,54 +1,62 @@
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using TheMonolith.ECommerce;
 
 namespace TheMonolith.Simulations
 {
-
     public class Seller : ISimulation
     {
         private static Random Random = new Random();
         private readonly IWarehouse Warehouse;
+        private readonly ILogger Logger;
 
-        public Seller(IWarehouse warehouse)
+        public Seller(ILogger logger, IWarehouse warehouse)
         {
+            Logger = logger;
             Warehouse = warehouse;
         }
 
-        public async Task Start()
+        public async Task StartAsync(CancellationToken stoppingToken)
         {
-            await Task.Delay(WaitForNextStep());
-            await ChargeNewProductAsync();
-            await Task.Delay(WaitForNextStep());
-            await ReFillSomeProductsAsync();
-            await Task.Delay(WaitForNextStep());
-            await DismissSomeProductsAsync();
+            await Task.Delay(WaitForNextStep(), stoppingToken);
+            await AddNewProductsAsync(stoppingToken);
+            await Task.Delay(WaitForNextStep(), stoppingToken);
+            await ReFillSomeProductsAsync(stoppingToken);
+            await Task.Delay(WaitForNextStep(), stoppingToken);
+            await DismissSomeProductsAsync(stoppingToken);
         }
 
-        private async Task DismissSomeProductsAsync()
+        private async Task DismissSomeProductsAsync(CancellationToken stoppingToken)
         {
             var products = await Warehouse.GetActiveProductsAsync();
-            products.TakeWhile(p => Random.Next() % 4 == 0).Select(p => Warehouse.DismissAsync(p));
+            var tasks = products.Shuffle().Take(products.Count() / 4)
+                .TapList(l => Logger.LogInformation($"Dismiss {l.Count()} products"))
+                .Select(p => Warehouse.DismissAsync(p));
+            await Task.WhenAll(tasks);
         }
 
-        private TimeSpan WaitForNextStep()
-        {
-            return TimeSpan.FromMilliseconds(Random.Next(1000));
-        }
-
-        private async Task ReFillSomeProductsAsync()
+        private async Task ReFillSomeProductsAsync(CancellationToken stoppingToken)
         {
             var products = await Warehouse.GetActiveProductsAsync();
-            products.TakeWhile(p => Random.Next() % 4 == 0).Select(p => Warehouse.RefillAsync(p, 1 + Random.Next(100)));
+            var tasks = products.Shuffle().Take(products.Count() / 4)
+                .TapList(l => Logger.LogInformation($"Refill {l.Count()} products"))
+                .Select(p => Warehouse.RefillAsync(p, 1 + Random.Next(100)));
+            await Task.WhenAll(tasks);
         }
 
-        private async Task ChargeNewProductAsync()
+        private async Task AddNewProductsAsync(CancellationToken stoppingToken)
         {
-            for (int i = 0; i < Random.Next(100); i++)
+            int v = Random.Next(100);
+            Logger.LogInformation($"Add {v} new products");
+            for (int i = 0; i < v; i++)
             {
+                if (stoppingToken.IsCancellationRequested)
+                    return;
                 var product = CreateNewProduct();
-                await Warehouse.FillNewProductAsync(product, Random.Next(100));
+                await Warehouse.AddNewProductAsync(product, Random.Next(100));
             }
         }
 
@@ -59,6 +67,11 @@ namespace TheMonolith.Simulations
                 $"title - {id}",
                 $"description for {id}",
                 new Money(1 + Random.Next(100), new Currency("EUR")));
+        }
+
+        private TimeSpan WaitForNextStep()
+        {
+            return TimeSpan.FromMilliseconds(Random.Next(1000));
         }
     }
 }

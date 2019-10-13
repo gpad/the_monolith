@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using TheMonolith.ECommerce;
 
@@ -19,23 +20,25 @@ namespace TheMonolith.Simulations
             Shop = shop;
         }
 
-        public async Task Start()
+        public async Task StartAsync(CancellationToken stoppingToken)
         {
-            await Task.Delay(WaitForNextStep());
+
+            await Task.Delay(WaitForNextStep(), stoppingToken);
             var customer = await ImpersonateCustomer();
             await ResetCart(customer);
             int count = 1 + Random.Next(10);
-            while (count > 0)
+            for (int i = 0; i < count && !stoppingToken.IsCancellationRequested; i++)
             {
                 var product = await ChoseProduct();
+                if (product == null) return;
                 await PutProductInCart(customer, product);
-                await Task.Delay(WaitForNextStep());
+                await Task.Delay(WaitForNextStep(), stoppingToken);
             }
-            if (FlipCoin()) return;
-            await Task.Delay(WaitForNextStep());
+            if (FlipCoin() || stoppingToken.IsCancellationRequested) return;
+            await Task.Delay(WaitForNextStep(), stoppingToken);
             await Checkout(customer);
-            if (FlipCoin()) return;
-            await Task.Delay(WaitForNextStep());
+            if (FlipCoin() || stoppingToken.IsCancellationRequested) return;
+            await Task.Delay(WaitForNextStep(), stoppingToken);
             await Pay(customer);
         }
 
@@ -67,13 +70,27 @@ namespace TheMonolith.Simulations
         private async Task<Product> ChoseProduct()
         {
             var products = await Warehouse.GetActiveProductsAsync();
-            return products.OrderBy(c => System.Guid.NewGuid()).First();
+            return products.OrderBy(c => System.Guid.NewGuid()).FirstOrDefault();
         }
 
         private async Task<Customer> ImpersonateCustomer()
         {
             var customers = await CustomerBase.ActiveCustomerAsync();
+            if (customers.Count() == 0 || FlipCoin())
+            {
+                return await CustomerBase.CreateCustomerAsync(CreateNewCustomer());
+            }
             return customers.OrderBy(c => System.Guid.NewGuid()).First();
+        }
+
+        private Customer CreateNewCustomer()
+        {
+            var id = Guid.NewGuid();
+            return new Customer(id,
+                $"FirstName{id}",
+                $"LastName{id}",
+                18 + Random.Next(82),
+                $"e{id}@test.com");
         }
 
         private bool FlipCoin()

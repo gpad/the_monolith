@@ -70,5 +70,28 @@ namespace TheMonolith.ECommerce
             await connection.OpenAsync();
             return connection;
         }
+
+        public async Task<Guid> CreateShipmentAddressAsync(Customer customer, string v1, string v2, string v3)
+        {
+            logger.LogDebug($"Add ShipmentAddress for customer {customer.Id}");
+            var address_id = Guid.NewGuid();
+            using (var connection = await GetOpenConnection())
+            {
+                await connection.ExecuteAsync(@"
+                insert
+                    into shipment_addresses
+                        (id, street, city, country, customer_id)
+                    values
+                        (@id, @street, @city, @country, @customer_id)
+                ", new{
+                    id = address_id,
+                    street = v1,
+                    city = v2,
+                    country = v3,
+                    customer_id = customer.Id
+                });
+            }
+            return address_id;
+        }
     }
 }

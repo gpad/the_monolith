@@ -29,7 +29,7 @@ namespace TheMonolith.Simulations
             while (!stoppingToken.IsCancellationRequested)
             {
                 Logger.LogInformation("*** Start cycle of simulation ***");
-                var tasks = Enumerable.Range(1, 1)
+                var tasks = Enumerable.Range(1, 10)
                     .Select(n => FlipCoin() ? (ISimulation)new Seller(Logger, Warehouse) : (ISimulation)new Buyer(CustomerBase, Warehouse, Shop))
                     .Select(simulation => simulation.StartAsync(stoppingToken));
                 await Task.WhenAll(tasks);
@@ -38,8 +38,7 @@ namespace TheMonolith.Simulations
 
         private bool FlipCoin()
         {
-            return false;
-            // return (Random.Next() % 2) == 0;
+            return (Random.Next() % 2) == 0;
         }
     }
 }

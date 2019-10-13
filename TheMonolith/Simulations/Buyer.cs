@@ -36,10 +36,10 @@ namespace TheMonolith.Simulations
             }
             if (FlipCoin() || stoppingToken.IsCancellationRequested) return;
             await Task.Delay(WaitForNextStep(), stoppingToken);
-            await Checkout(customer);
+            var invoice_id = await Checkout(customer);
             if (FlipCoin() || stoppingToken.IsCancellationRequested) return;
             await Task.Delay(WaitForNextStep(), stoppingToken);
-            await Pay(customer);
+            await Pay(customer, invoice_id);
         }
 
         private TimeSpan WaitForNextStep()
@@ -52,14 +52,14 @@ namespace TheMonolith.Simulations
             await Shop.ResetCartAsync(customer);
         }
 
-        private async Task Pay(Customer customer)
+        private async Task Pay(Customer customer, Guid invoice_id)
         {
-            await Shop.PayAsync(customer);
+            await Shop.PayAsync(customer, invoice_id);
         }
 
-        private async Task Checkout(Customer customer)
+        private async Task<Guid> Checkout(Customer customer)
         {
-            await Shop.CheckoutAsync(customer);
+            return await Shop.CheckoutAsync(customer);
         }
 
         private async Task PutProductInCart(Customer customer, Product product)
@@ -78,7 +78,9 @@ namespace TheMonolith.Simulations
             var customers = await CustomerBase.ActiveCustomerAsync();
             if (customers.Count() == 0 || FlipCoin())
             {
-                return await CustomerBase.CreateCustomerAsync(CreateNewCustomer());
+                var customer = await CustomerBase.CreateCustomerAsync(CreateNewCustomer());
+                await CustomerBase.CreateShipmentAddressAsync(customer, "Via Giulio Cesare 13", "Rome", "Italy");
+                return customer;
             }
             return customers.OrderBy(c => System.Guid.NewGuid()).First();
         }

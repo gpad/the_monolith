@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 
 namespace TheMonolith.ECommerce
@@ -5,8 +6,8 @@ namespace TheMonolith.ECommerce
     public interface IShop
     {
         Task PutProductInCartAsync(Customer customer, Product product);
-        Task CheckoutAsync(Customer customer);
+        Task<Guid> CheckoutAsync(Customer customer);
         Task ResetCartAsync(Customer customer);
-        Task PayAsync(Customer customer);
+        Task PayAsync(Customer customer, Guid invoice_id);
     }
 }

@@ -19,6 +19,9 @@ namespace TheMonolith.Migrations
                 .WithColumn("last_name").AsString(255)
                 .WithColumn("address").AsString()
                 .WithColumn("total").AsCurrency()
+                .WithColumn("customer_id").AsGuid().ForeignKey("customers", "id")
+                .WithColumn("cart_id").AsGuid().ForeignKey("carts", "id")
+                .WithColumn("status").AsString().NotNullable()
                 ;
         }
     }

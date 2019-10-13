@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using FluentMigrator.Runner;
+﻿using FluentMigrator.Runner;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -24,22 +19,23 @@ namespace TheMonolith
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services
-                .AddFluentMigratorCore()
-                .ConfigureRunner(builder =>
-                    builder.AddSQLite()
-                    .WithGlobalConnectionString("Data Source=TheDatabase.db")
-                    .ScanIn(typeof(Migrations.AddCustomersTable).Assembly).For.Migrations()
-                )
-                .AddControllersWithViews();
+            // CONFIGURE HERE THE MIGRATION ???
+            // services
+            //     .AddFluentMigratorCore()
+            //     .ConfigureRunner(builder =>
+            //         builder.AddSQLite()
+            //         .WithGlobalConnectionString("Data Source=TheDatabase.db")
+            //         .ScanIn(typeof(Migrations.AddCustomersTable).Assembly).For.Migrations()
+            //     )
+            //     .AddControllersWithViews();
 
-            using (var scope = services.BuildServiceProvider(false).CreateScope())
-            {
-                var runner = scope.ServiceProvider.GetRequiredService<IMigrationRunner>();
+            // using (var scope = services.BuildServiceProvider(false).CreateScope())
+            // {
+            //     var runner = scope.ServiceProvider.GetRequiredService<IMigrationRunner>();
 
-                // Execute the migrations
-                runner.MigrateUp();
-            }
+            //     // Execute the migrations
+            //     runner.MigrateUp();
+            // }
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

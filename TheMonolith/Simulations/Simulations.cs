@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using TheMonolith.Shop;
+using Microsoft.Extensions.Logging;
+using TheMonolith.ECommerce;
 
 namespace TheMonolith.Simulations
 {
@@ -13,9 +14,11 @@ namespace TheMonolith.Simulations
         private readonly IWarehouse Warehouse;
         private readonly ICustomerBase CustomerBase;
         private readonly IShop Shop;
+        public ILogger Logger { get; }
 
-        public Simulations(IWarehouse warehouse, ICustomerBase customerBase, IShop shop)
+        public Simulations(ILogger logger, IWarehouse warehouse, ICustomerBase customerBase, IShop shop)
         {
+            this.Logger = logger;
             Warehouse = warehouse;
             CustomerBase = customerBase;
             Shop = shop;
@@ -25,6 +28,7 @@ namespace TheMonolith.Simulations
         {
             while (!stoppingToken.IsCancellationRequested)
             {
+                Logger.LogInformation("Start cycle of simulation");
                 var tasks = Enumerable.Range(1, 100).Select(n => FlipCoin() ? (ISimulation)new Seller(Warehouse) : (ISimulation)new Buyer(CustomerBase, Warehouse, Shop)).Select(simulation => simulation.Start());
                 await Task.WhenAll(tasks);
             }

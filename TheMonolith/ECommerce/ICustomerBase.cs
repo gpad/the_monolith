@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace TheMonolith.Shop
+namespace TheMonolith.ECommerce
 {
     public interface ICustomerBase
     {

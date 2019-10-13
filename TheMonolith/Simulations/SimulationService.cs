@@ -2,20 +2,24 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using TheMonolith.ECommerce;
 
 namespace TheMonolith.Simulations
 {
     internal class SimulationService : BackgroundService
     {
-        private readonly ServiceProvider ServiceProvider;
-        public SimulationService(ServiceProvider serviceProvider)
+        public ILogger<SimulationService> Logger { get; }
+        public SimulationService(ILogger<SimulationService> logger)
         {
-            ServiceProvider = serviceProvider;
+            this.Logger = logger;
+
         }
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var simulations = ServiceProvider.GetRequiredService<Simulations>();
+            Logger.LogInformation("Start Simulation");
+            var simulations = new Simulations(Logger, new Warehouse(), new CustomerBase(), new Shop());
             return simulations.StartAsync(stoppingToken);
         }
     }

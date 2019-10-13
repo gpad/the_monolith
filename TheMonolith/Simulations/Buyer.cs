@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using TheMonolith.Shop;
+using TheMonolith.ECommerce;
 
 namespace TheMonolith.Simulations
 {

@@ -20,14 +20,14 @@ namespace TheMonolith
         public void ConfigureServices(IServiceCollection services)
         {
             // CONFIGURE HERE THE MIGRATION ???
-            // services
+            services
             //     .AddFluentMigratorCore()
             //     .ConfigureRunner(builder =>
             //         builder.AddSQLite()
             //         .WithGlobalConnectionString("Data Source=TheDatabase.db")
             //         .ScanIn(typeof(Migrations.AddCustomersTable).Assembly).For.Migrations()
             //     )
-            //     .AddControllersWithViews();
+                .AddControllersWithViews();
 
             // using (var scope = services.BuildServiceProvider(false).CreateScope())
             // {

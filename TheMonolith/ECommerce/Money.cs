@@ -1,4 +1,4 @@
-namespace TheMonolith.Shop
+namespace TheMonolith.ECommerce
 {
     public class Money
     {

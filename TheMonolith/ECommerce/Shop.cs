@@ -2,10 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Dapper;
+using Microsoft.Azure.ServiceBus;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace TheMonolith.ECommerce
 {
@@ -23,12 +26,17 @@ namespace TheMonolith.ECommerce
 
     public class Shop : IShop
     {
+        private readonly string connectionString;
+        const string TopicName = "payments";
         private readonly ILogger logger;
         private readonly Random random = new Random();
+        private readonly TopicClient topicClient;
 
-        public Shop(ILogger logger)
+        public Shop(ILogger logger, string connectionString)
         {
             this.logger = logger;
+            this.connectionString = connectionString;
+            topicClient = new TopicClient(connectionString, TopicName);
         }
 
         public async Task<Guid> CheckoutAsync(Customer customer)
@@ -88,9 +96,22 @@ namespace TheMonolith.ECommerce
                     if (affectedRows != 1)
                         throw new ArgumentException($"Unable to update invoice {invoiceId} for customer {customer.Id}");
                     await transaction.CommitAsync();
-                    return await GetInvoiceAsync(invoiceId, customer);
+                    var invoice = await GetInvoiceAsync(invoiceId, customer);
+                    await topicClient.SendAsync(CreateInvoiceMessage(invoice));
+                    return invoice;
                 }
             }
+        }
+
+        private Message CreateInvoiceMessage(Invoice invoice)
+        {
+            var body = JsonConvert.SerializeObject(new{
+                invoiceId = invoice.Id,
+                number = invoice.Number,
+                customerId = invoice.Customer.Id,
+                total = invoice.Total
+            });
+            return new Message(Encoding.UTF8.GetBytes(body));
         }
 
         private async Task<Invoice> GetInvoiceAsync(Guid invoiceId, Customer customer)

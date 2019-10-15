@@ -7,16 +7,15 @@ using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using Microsoft.Azure.Management.ServiceBus.Fluent;
 
-namespace lb
+namespace TheMonolith.Infrastructure
 {
     class AzureInfrastracture
     {
-        private const string TopicNameLBStatus = "lb_status";
-        private const string TopicNameAsUpdates = "as_updates";
+        private const string TopicNameForUpdates = "payments";
 
         private static IAzure CreateAzure()
         {
-            var files = new[] { "lb/my.azureauth", "my.azureauth" };
+            var files = new[] { "../my.azureauth", "./my.azureauth" };
             var path = files.Where(f => File.Exists(f)).FirstOrDefault();
             var credentials = Microsoft.Azure.Management.ResourceManager.Fluent.SdkContext.AzureCredentialsFactory.FromFile(path);
 
@@ -28,18 +27,26 @@ namespace lb
             return azure;
         }
 
-        public static async Task<AzureInfrastractureInfoForLB> CreateInfrastructureForLBAsync(string namespaceName, string id)
+    //     public static async Task<AzureInfrastractureInfo> CreateInfrastructureExample(string namespaceName)
+    //     {
+    //         IAzure azure = CreateAzure();
+
+    //         IServiceBusNamespace nameSpace = await RequireNamespace(azure, namespaceName);
+    //         var topic = await FindOrCreateTopic(nameSpace, topicName);
+    //         await FindOrCreateSubscriptionAsync(topic, subscriptionName);
+
+    //         var asTopic = await RequireTopic(nameSpace, anotherTopicName);
+    //         await FindOrCreateSubscriptionAsync(asTopic, anotherSubscriptionName);
+
+    //         return new AzureInfrastractureInfo(...);
+    //    }
+
+        public static async Task<AzureInfrastractureInfo> CreateInfrastructureAsync(string namespaceName)
         {
-            IAzure azure = CreateAzure();
-
-            IServiceBusNamespace nameSpace = await RequireNamespace(azure, namespaceName);
-            var topic = await FindOrCreateTopic(nameSpace, TopicNameLBStatus);
-            await FindOrCreateSubscriptionAsync(topic, SubscriptionName(id));
-
-            var asTopic = await RequireTopic(nameSpace, TopicNameAsUpdates);
-            await FindOrCreateSubscriptionAsync(asTopic, SubscriptionName(id));
-
-            return new AzureInfrastractureInfoForLB(TopicNameLBStatus, SubscriptionName(id), TopicNameAsUpdates, SubscriptionName(id));
+            var azure = CreateAzure();
+            var nameSpace = await RequireNamespace(azure, namespaceName);
+            var topic = await FindOrCreateTopic(nameSpace, TopicNameForUpdates);
+            return new AzureInfrastractureInfo(TopicNameForUpdates);
         }
 
         private static async Task<ITopic> RequireTopic(IServiceBusNamespace nameSpace, string topicName)
@@ -51,17 +58,6 @@ namespace lb
             return topic;
         }
 
-        internal static async Task<AzureInfrastractureInfoForAS> CreateInfrastructureForASAsync(string namespaceName)
-        {
-            var azure = CreateAzure();
-
-            var nameSpace = await RequireNamespace(azure, namespaceName).ConfigureAwait(false);
-
-            var topic = await FindOrCreateTopic(nameSpace, TopicNameAsUpdates);
-
-            return new AzureInfrastractureInfoForAS(TopicNameAsUpdates);
-        }
-
         private static async Task<ISubscription> FindOrCreateSubscriptionAsync(ITopic topic, string name)
         {
             System.Console.WriteLine("Find or Create Subscription {0}", name);
@@ -69,11 +65,6 @@ namespace lb
             Dump(subscriptions);
 
             return await topic.Subscriptions.Define(name).CreateAsync();
-        }
-
-        private static string SubscriptionName(string id)
-        {
-            return $"load_balancer_{id}";
         }
 
         private static async Task<ITopic> FindOrCreateTopic(IServiceBusNamespace nameSpace, string name)
@@ -95,11 +86,6 @@ namespace lb
                 throw new ArgumentException($"Unable to find namespace {nameSpaceName}");
             return nameSpace;
         }
-
-        // private static void Dump<T>(System.Collections.Generic.IEnumerable<T> list)
-        // {
-        //     list.ToList().ForEach(e => Dump(e));
-        // }
 
         private static void Dump(IPagedCollection<IServiceBusNamespace> namespaces)
         {
@@ -139,27 +125,11 @@ namespace lb
             System.Console.WriteLine("---------------");
         }
 
-        public class AzureInfrastractureInfoForLB
-        {
-            public string LBStatusTopicName { get; }
-            public string LBStatusSubscriptionName { get; }
-            public string ASUpdatesTopicName { get; }
-            public string ASUpdatesSubscriptionName { get; }
-
-            public AzureInfrastractureInfoForLB(string lbStatusTopicName, string lbStatusSubscriptionName, string asUpdatesTopicName, string asUpdatesSubscriptionName)
-            {
-                this.LBStatusTopicName = lbStatusTopicName;
-                this.LBStatusSubscriptionName = lbStatusSubscriptionName;
-                this.ASUpdatesTopicName = asUpdatesTopicName;
-                this.ASUpdatesSubscriptionName = asUpdatesSubscriptionName;
-            }
-        }
-
-        public class AzureInfrastractureInfoForAS
+        public class AzureInfrastractureInfo
         {
             public string TopicName { get; }
 
-            public AzureInfrastractureInfoForAS(string topicName)
+            public AzureInfrastractureInfo(string topicName)
             {
                 this.TopicName = topicName;
             }
